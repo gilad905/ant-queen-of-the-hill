@@ -9,8 +9,11 @@ if is queen:
          create friend on 1
       else:
          move opposite of near red
-// else:
-
+else:
+   if on white:
+      mark yellow
+   else:
+      move
 */
 
 var WORKER = 1;
@@ -20,11 +23,15 @@ var WHITE = 1;
 var YELLOW = 2;
 var RED = 5;
 
-var me = view[4].ant;
+var myCell = view[4];
+var me = myCell.ant;
 
 function Main() {
+   if (FindAround("food", RED)
+      console.Pause();
+
    if (me.type == QUEEN) {
-      if (view[4].color == WHITE)
+      if (myCell.color == WHITE)
          return MarkMe(RED);
       else {
          var friendAround = FindAround("friend");
@@ -39,8 +46,15 @@ function Main() {
                return MoveTo(0);
          }
       }
-   } else
-      return MarkMe(YELLOW);
+   } else {
+      if (myCell.color == WHITE)
+         return MarkMe(YELLOW);
+      else {
+         var queenPos = FindAround("friend");
+         var rePos = FindAround("color", RED);
+         return ContinuePath(queenPos, redPos);
+      }
+   }
 }
 
 return Validate(Main());
@@ -63,6 +77,20 @@ function Validate(move) {
       return nothing;
 
    return move;
+}
+
+function ContinuePath(queenPos, redPos) {
+   var toGo = -1;
+   if (queenPos == 1)
+      toGo = redPos == 3 ? 2 : 0;
+   else if (queenPos == 3)
+      toGo = redPos == 1 ? 6 : 0;
+   else if (queenPos == 5)
+      toGo = redPos == 1 ? 8 : 2;
+   else if (queenPos == 7)
+      toGo = redPos == 5 ? 6 : 8;
+
+   return MoveTo(toGo);
 }
 
 function OppositeTo(cell) {
