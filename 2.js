@@ -26,57 +26,49 @@ var RED = 5;
 var myCell = view[4];
 var me = myCell.ant;
 
-function Main() {
-   if (FindAround("food", RED)
-      console.Pause();
+function forQueen() {
+   if (myCell.color == WHITE)
+      return MarkMe(RED);
+   else {
+      var friendAround = FindAround("friend");
+      var redPos = FindAround("color", RED);
+      var oppRed = OppositeTo(redPos);
 
-   if (me.type == QUEEN) {
-      if (myCell.color == WHITE)
-         return MarkMe(RED);
-      else {
-         var friendAround = FindAround("friend");
-         if (me.food && friendAround == -1) {
-            return CreateAt(1);
-         } else {
-            var redPos = FindAround("color", RED);
-            if (redPos != -1) {
-               var oppRed = OppositeTo(redPos);
-               return MoveTo(oppRed);
-            } else
-               return MoveTo(0);
-         }
-      }
-   } else {
-      if (myCell.color == WHITE)
-         return MarkMe(YELLOW);
-      else {
-         var queenPos = FindAround("friend");
-         var rePos = FindAround("color", RED);
-         return ContinuePath(queenPos, redPos);
+      if (me.food && friendAround == -1) {
+         if (redPos != -1 && view[oppRed].color != RED) {
+            var workerPos = NewWorker(redPos);
+            return CreateAt(workerPos);
+         } else
+            return MoveTo(4);
+      } else {
+         if (redPos != -1) {
+            return MoveTo(oppRed);
+         } else
+            return MoveTo(0);
       }
    }
 }
 
-return Validate(Main());
+function forWorker() {
+   if (myCell.color == WHITE)
+      return MarkMe(YELLOW);
+   else {
+      var queenPos = FindAround("friend");
+      var redPos = FindAround("color", RED);
+      var toGo = ContinuePath(queenPos, redPos);
+      return MoveTo(toGo == -1 ? 4 : toGo);
+   }
+}
+
+return Validate(me.type == QUEEN ? forQueen() : forWorker());
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function Validate(move) {
-   var nothing = MoveTo(4);
-
-   if (move.cell === undefined || move.cell < 0 || move.cell > 8)
-      return nothing;
-   if (move.color < 1 || move.color > 8)
-      return nothing;
-   if (move.type < 1 || move.type > 4)
-      return nothing;
-
-   if (move.color && move.type)
-      return nothing;
-   if (!move.color && !move.type && move.cell != 4 && view[move.cell].ant)
-      return nothing;
-
-   return move;
+function NewWorker(redPos) {
+   if (redPos == 0 || redPos == 2)
+      return 7;
+   else
+      return 1;
 }
 
 function ContinuePath(queenPos, redPos) {
@@ -89,8 +81,25 @@ function ContinuePath(queenPos, redPos) {
       toGo = redPos == 1 ? 8 : 2;
    else if (queenPos == 7)
       toGo = redPos == 5 ? 6 : 8;
+   return toGo;
+}
 
-   return MoveTo(toGo);
+function Validate(move) {
+   if (
+      (!move) ||
+      (move.cell === undefined || move.cell < 0 || move.cell > 8) ||
+      (move.color < 1 || move.color > 8) ||
+      (move.type < 1 || move.type > 4) ||
+      (move.color && move.type) ||
+      (!move.color && !move.type && move.cell != 4 && view[move.cell].ant)
+   ) {
+      // console.error("INVALID MOVE:");
+      // console.error(move);
+      // console.pause();
+      return MoveTo(4);
+   }
+
+   return move;
 }
 
 function OppositeTo(cell) {
@@ -119,31 +128,29 @@ function MoveTo(cell) {
 }
 
 function FindAround(type, value) {
-   for (var i in view) {
-      if (i != 4) {
-         if (type == "friend" && view[i].ant && view[i].ant.friend)
-            return i;
-         else if (type == "color" && view[i].color == value)
-            return i;
-      }
+   for (var i = 0, cell; cell = view[i]; i++) {
+      if (i != 4 && CellMatchesDesc(cell, type, value))
+         return i;
    }
-
    return -1;
 }
 
-function NearPos(friendPos) {
-   friendPos = parseInt(friendPos);
-   var toRet = -1;
+function CountAround(type, value) {
+   var count = 0;
+   for (var i = 0, cell; cell = view[i]; i++) {
+      if (i != 4 && CellMatchesDesc(cell, type, value))
+         count++;
+   }
+   return count;
+}
 
-   if (friendPos == 3)
-      toRet = 0;
-   else if ([2, 5].includes(friendPos))
-      toRet = friendPos + 3;
-   else if (friendPos == 8)
-      toRet = 7;
-   else
-      toRet = friendPos + 1;
+function CellMatchesDesc(cell, type, value) {
+   if (type == "friend" && cell.ant && cell.ant.friend)
+      return true;
+   else if (type == "color" && cell.color == value)
+      return true;
+   else if (type == "food" && cell.food)
+      return true;
 
-   // console.log(friendPos + " - " + toRet);
-   return toRet;
+   return false;
 }
