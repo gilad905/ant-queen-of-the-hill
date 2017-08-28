@@ -1,27 +1,3 @@
-/*
-Vampire
--------
-
-glide around until finding food, make 1 worker
-continue gliding until finding any color
-if it's a spot - find its center
-if it's a trail - follow it
-favor spots over trails (higher chance that the queen is idle)
-trace the queen
-steal from it with the worker, until it's empty
-go on until finding another queen
-
-----------------------------------------------------
-
-start:
-glide around until finding food, make 1 worker
-continue gliding until finding any color
-gravitate towards color's mass center
-
-----------------------------------------------------
-
-*/
-
 var WORKER = 1;
 var QUEEN = 5;
 
@@ -34,32 +10,89 @@ var me = myCell.ant;
 
 return Validate(me.type == QUEEN ? forQueen() : forWorker());
 
+/*
+Vampire
+-------
+
+glide around until finding food, make 1 worker
+continue gliding until finding any color
+if it's a spot - find its center
+if it's a trail - follow it
+favor spots over trails (higher chance that the queen is idle)
+trace the queen
+steal from it with the worker, until it's empty
+go on to find another queen
+
+----------------------------------------------------
+
+start:
+glide around until finding food, make 1 worker
+continue gliding until finding any color
+gravitate towards color's mass center:
+    when worker finds color:
+        signal the queen where to go
+*/
+
 function forQueen() {
     var worker = FindAround("friend");
 
-    if (worker == -1) {
+    if (worker != -1) {
+        var workerMark = FindRichestCellMark(worker);
+        return MoveTo(workerMark ? workerMark : RightOf(worker));
+    } else {
         if (me.food)
             return CreateAt(3);
         else {
             var foodPos = FindAround("food");
-            if (foodPos != -1) {
-                console.pause();
-                return MoveTo(foodPos);
-            }
-            else
-                return RedTrail();
+            return foodPos != -1 ? MoveTo(foodPos) : RedTrail();
         }
-    } else
-        return MoveTo(RightOf(worker));
+    }
 }
 
 function forWorker() {
     var queen = FindAround("friend");
-    return MoveTo(LeftOf(queen));
+    if (queen == -1)
+        return MoveTo(4);
+    else {
+        return;
+        var color = FindAround("color");
+        if (color != -1) {
+            var richestCell = FindRichestCell();
+            MarkRichestCell(richestCell, queen);
+            return MoveTo(richestCell);
+        } else
+            return MoveTo(LeftOf(queen));
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+function MarkRichestCell(cell, queen) {
+    if (SeeEachOther(cell, queen))
+}
+
+function FindRichestCellMark(worker) {
+
+}
+
+function FindRichestCell() {
+    var rowSums = [0, 0, 0];
+    var colSums = [0, 0, 0];
+    for (var x = 0; x < 3; x++) {
+        for (var y = 0; y < 3; y++) {
+            var aCell = y * 3 + x;
+            if (view[aCell].color != 1) {
+                rowSums[x]++;
+                colSums[y]++;
+            }
+        }
+    }
+    var richestRow = rowSums.indexOf(Math.max(...rowSums));
+    var richestCol = colSums.indexOf(Math.max(...colSums));
+    var richestCell = richestCol * 3 + richestRow;
+    return richestCell;
+}
 
 function RedTrail() {
     if (myCell.color != RED)
@@ -75,7 +108,7 @@ function RedTrail() {
 }
 
 function LeftOf(pos) {
-    if (pos == 8 || pos == 5)
+    if (pos == 5 || pos == 8)
         return pos - 3;
     else if (pos == 0 || pos == 3)
         return pos + 3;
@@ -106,7 +139,7 @@ function Validate(move) {
         (move.type && view[move.cell].ant) ||
         (!move.color && !move.type && move.cell != 4 && view[move.cell].ant)
     ) {
-        // console.error("INVALID MOVE:");
+        console.error("INVALID");
         // console.error(move);
         // console.pause();
         return MoveTo(4);
@@ -140,6 +173,15 @@ function MoveTo(cell) {
     };
 }
 
+function FindAroundAll(type, value) {
+    var all = [];
+    for (var i = 0, cell; cell = view[i]; i++) {
+        if (i != 4 && CellMatchesDesc(cell, type, value))
+            all.push(i);
+    }
+    return all;
+}
+
 function FindAround(type, value) {
     for (var i = 0, cell; cell = view[i]; i++) {
         if (i != 4 && CellMatchesDesc(cell, type, value))
@@ -160,7 +202,7 @@ function CountAround(type, value) {
 function CellMatchesDesc(cell, type, value) {
     if (
         (type == "friend" && cell.ant && cell.ant.friend) ||
-        (type == "color" && (cell.color == value || !value && cell.color != WHITE)) ||
+        (type == "color" && (value ? cell.color == value : cell.color != WHITE)) ||
         (type == "food" && cell.food)
     )
         return true;
