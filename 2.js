@@ -36,16 +36,12 @@ function forQueen() {
 
       if (me.food && friendAround == -1) {
          if (redPos != -1 && view[oppRed].color != RED) {
-            var workerPos = NewWorker(redPos);
+            var workerPos = WorkerRedPos(redPos);
             return CreateAt(workerPos);
          } else
             return MoveTo(4);
-      } else {
-         if (redPos != -1) {
-            return MoveTo(oppRed);
-         } else
-            return MoveTo(0);
-      }
+      } else
+         return MoveTo(redPos != -1 ? oppRed : 0);
    }
 }
 
@@ -64,7 +60,7 @@ return Validate(me.type == QUEEN ? forQueen() : forWorker());
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function NewWorker(redPos) {
+function WorkerRedPos(redPos) {
    if (redPos == 0 || redPos == 2)
       return 7;
    else

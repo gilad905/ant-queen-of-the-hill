@@ -58,7 +58,6 @@ function nearPos(friendPos) {
    else
       toRet = friendPos + 1;
 
-   // console.log(friendPos + " - " + toRet);
    return toRet;
 }
 
