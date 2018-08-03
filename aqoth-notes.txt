@@ -1,0 +1,14 @@
+Vampire
+-------
+
+glide around until finding food, make 1 worker
+continue gliding with the worker until finding any color
+if it's a spot - find its center
+if it's a trail - follow it
+favor spots over trails (higher chance that the queen is idle)
+trace the opponent queen
+steal from it with the worker, until it's empty
+go on to find another opponent queen
+
+moving with worker:
+   
